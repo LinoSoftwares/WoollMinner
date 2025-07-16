@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora de Ganhos</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #FFD700;
+      --secondary: #000000;
+      --accent: #FFC000;
+      --text: #333333;
+      --light: #FFF8E1;
+      --dark: #1A1A1A;
+    }
+
+    body {
+      background-color: var(--secondary);
+      color: var(--light);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 2rem;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: var(--dark);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .description {
+      text-align: center;
+      color: #ccc;
+      margin-bottom: 2rem;
+    }
+
+    .tier-info {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+
+    .tier-card {
+      flex: 1;
+      min-width: 250px;
+      background-color: var(--secondary);
+      border-top: 4px solid var(--primary);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .tier-card h3 {
+      color: var(--primary);
+    }
+
+    .tier-card .percentage {
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    input {
+      padding: 0.7rem;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      background-color: var(--secondary);
+      color: var(--light);
+    }
+
+    button {
+      padding: 1rem;
+      background-color: var(--primary);
+      border: none;
+      color: var(--secondary);
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .results {
+      display: none;
+      margin-top: 2rem;
+    }
+
+    .results.active {
+      display: block;
+    }
+
+    .profit-summary {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+
+    .profit-card {
+      flex: 1;
+      min-width: 200px;
+      background-color: var(--secondary);
+      border-top: 3px solid var(--primary);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .profit-card h3 {
+      color: var(--primary);
+    }
+
+    .profit-card p {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 2rem;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 0.8rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    th {
+      background-color: var(--primary);
+      color: var(--secondary);
+    }
+
+    tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    canvas {
+      background-color: #111;
+      margin-top: 2rem;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora de Ganhos</h1>
+    <p class="description">Insira o valor que deseja investir e veja os ganhos em 30 dias, com base no plano correspondente.</p>
+
+    <div class="tier-info">
+      <div class="tier-card">
+        <h3>Plano Básico</h3>
+        <p>Investimento: $10 - $50</p>
+        <div class="percentage">3% ao dia</div>
+        <p>Retorno total: 150%</p>
+      </div>
+      <div class="tier-card">
+        <h3>Plano Intermediário</h3>
+        <p>Investimento: $51 - $100</p>
+        <div class="percentage">4% ao dia</div>
+        <p>Retorno total: 200%</p>
+      </div>
+      <div class="tier-card">
+        <h3>Plano Premium</h3>
+        <p>Investimento: $101+</p>
+        <div class="percentage">5% ao dia</div>
+        <p>Retorno total: 300%</p>
+      </div>
+    </div>
+
+    <form id="calculatorForm">
+      <label for="initialAmount">Valor Inicial (USD):</label>
+      <input type="number" id="initialAmount" min="10" step="0.01" required placeholder="Digite o valor inicial"/>
+      <button type="submit">Calcular Ganhos</button>
+    </form>
+
+    <div class="results" id="results">
+      <div class="profit-summary">
+        <div class="profit-card">
+          <h3>Investimento Inicial</h3>
+          <p id="initialInvestment">$0.00</p>
+        </div>
+        <div class="profit-card">
+          <h3>Lucro Diário</h3>
+          <p id="dailyProfit">$0.00</p>
+        </div>
+        <div class="profit-card">
+          <h3>Lucro Total (30 dias)</h3>
+          <p id="totalProfit">$0.00</p>
+        </div>
+        <div class="profit-card">
+          <h3>Valor Final</h3>
+          <p id="finalAmount">$0.00</p>
+        </div>
+      </div>
+
+      <canvas id="profitChart" height="300"></canvas>
+
+      <h2 style="margin-top:2rem;">Detalhamento Diário</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dia</th>
+            <th>Valor no Dia</th>
+            <th>Lucro Diário</th>
+            <th>Lucro Acumulado</th>
+          </tr>
+        </thead>
+        <tbody id="dailyResults"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('calculatorForm');
+    const results = document.getElementById('results');
+    let chart = null;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('initialAmount').value);
+      if (isNaN(amount) || amount < 10) {
+        alert('O valor mínimo é $10.');
+        return;
+      }
+
+      let dailyRate = 0, totalRate = 0;
+      if (amount <= 50) {
+        dailyRate = 0.03;
+        totalRate = 1.5;
+      } else if (amount <= 100) {
+        dailyRate = 0.04;
+        totalRate = 2.0;
+      } else {
+        dailyRate = 0.05;
+        totalRate = 3.0;
+      }
+
+      const lucroDiario = amount * dailyRate;
+      const lucroTotal = amount * (totalRate - 1);
+      const valorFinal = amount * totalRate;
+
+      document.getElementById('initialInvestment').textContent = `$${amount.toFixed(2)}`;
+      document.getElementById('dailyProfit').textContent = `$${lucroDiario.toFixed(2)}`;
+      document.getElementById('totalProfit').textContent = `$${lucroTotal.toFixed(2)}`;
+      document.getElementById('finalAmount').textContent = `$${valorFinal.toFixed(2)}`;
+      results.classList.add('active');
+
+      // Tabela
+      const tbody = document.getElementById('dailyResults');
+      tbody.innerHTML = "";
+      let atual = amount, acumulado = 0;
+      const labels = [], values = [];
+
+      for (let i = 1; i <= 30; i++) {
+        const lucro = atual * dailyRate;
+        acumulado += lucro;
+        const diaAnterior = atual;
+        atual += lucro;
+        labels.push("Dia " + i);
+        values.push(atual.toFixed(2));
+        tbody.innerHTML += `
+          <tr>
+            <td>${i}</td>
+            <td>$${diaAnterior.toFixed(2)}</td>
+            <td>$${lucro.toFixed(2)}</td>
+            <td>$${acumulado.toFixed(2)}</td>
+          </tr>`;
+      }
+
+      // Gráfico
+      const ctx = document.getElementById('profitChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Valor Diário',
+            data: values,
+            borderColor: '#FFD700',
+            backgroundColor: 'rgba(255,215,0,0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              ticks: { color: '#FFF' },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: {
+              ticks: { color: '#FFF' },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#FFF'
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+  </html>
